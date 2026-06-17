@@ -1,0 +1,59 @@
+{
+  "manifest_version": 3,
+  "name": "LoopMaster - YouTube A-B Looper",
+  "version": "1.0.0",
+  "description": "Loop specific parts of YouTube videos with one click",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "loopmaster@your-email.com",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
+  },
+  "permissions": ["storage"],
+  "host_permissions": ["https://www.youtube.com/*"],
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["dist/content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "128": "icons/icon128.png"
+  },
+  "commands": {
+    "set-start": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+1"
+      },
+      "description": "Set start point (A)"
+    },
+    "set-end": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+2"
+      },
+      "description": "Set end point (B)"
+    },
+    "toggle-loop": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+3"
+      },
+      "description": "Toggle loop"
+    },
+    "clear-loop": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+4"
+      },
+      "description": "Clear loop"
+    }
+  }
+}
