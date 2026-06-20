@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LoopMaster - YouTube A-B Looper",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Loop specific parts of YouTube videos with one click",
   "browser_specific_settings": {
     "gecko": {
@@ -12,10 +12,22 @@
     }
   },
   "permissions": ["storage"],
-  "host_permissions": ["https://www.youtube.com/*"],
+  "host_permissions": [
+    "https://www.youtube.com/*",
+    "https://m.youtube.com/*"
+  ],
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "128": "icons/icon128.png"
+    }
+  },
   "content_scripts": [
     {
-      "matches": ["https://www.youtube.com/*"],
+      "matches": [
+        "https://www.youtube.com/*",
+        "https://m.youtube.com/*"
+      ],
       "js": ["dist/content.js"],
       "run_at": "document_idle"
     }
@@ -23,34 +35,5 @@
   "icons": {
     "16": "icons/icon16.png",
     "128": "icons/icon128.png"
-  },
-  "commands": {
-    "set-start": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+1"
-      },
-      "description": "Set start point (A)"
-    },
-    "set-end": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+2"
-      },
-      "description": "Set end point (B)"
-    },
-    "toggle-loop": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+3"
-      },
-      "description": "Toggle loop"
-    },
-    "clear-loop": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+4"
-      },
-      "description": "Clear loop"
-    }
-  },
-  "release_notes": {
-    "en-US": "What's new in v1.0.1:\n• Removed annoying popup on icon click\n• Control bar is now draggable - move it anywhere on screen!"
   }
 }
