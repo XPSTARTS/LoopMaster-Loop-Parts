@@ -1,6 +1,6 @@
-// src/content.ts - WORKING VERSION
+// src/content.ts - Version 2.0 with draggable bar
 
-console.log('🔴 LoopMaster FULL VERSION LOADED!');
+console.log('🔴 LoopMaster v1.0.1 LOADED!');
 
 class YouTubeLooper {
   private video: HTMLVideoElement | null = null;
@@ -10,6 +10,11 @@ class YouTubeLooper {
     endTime: null as number | null
   };
   private container: HTMLDivElement | null = null;
+  private dragData = {
+    isDragging: false,
+    offsetX: 0,
+    offsetY: 0
+  };
 
   constructor() {
     console.log('🎬 LoopMaster initializing...');
@@ -17,11 +22,11 @@ class YouTubeLooper {
   }
 
   private init(): void {
-    // Wait for video to exist
     this.waitForVideo().then(() => {
       console.log('✅ Video found!');
       this.createUI();
       this.setupKeyboardShortcuts();
+      this.restorePosition();
     });
   }
 
@@ -65,7 +70,23 @@ class YouTubeLooper {
       box-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
       border: 2px solid #FF6B6B;
       user-select: none;
+      cursor: grab;
     `;
+
+    // Drag handle at the top
+    const handle = document.createElement('div');
+    handle.style.cssText = `
+      position: absolute;
+      top: -2px;
+      left: 0;
+      right: 0;
+      height: 20px;
+      cursor: grab;
+      border-radius: 12px 12px 0 0;
+      background: transparent;
+    `;
+    handle.title = 'Drag to move';
+    this.container.appendChild(handle);
 
     // A button
     const btnA = this.createButton('A', '#FF6B6B', () => this.setStart());
@@ -101,7 +122,10 @@ class YouTubeLooper {
     this.container.appendChild(display);
 
     document.body.appendChild(this.container);
-    console.log('✅ UI created!');
+    console.log('✅ UI created with drag support!');
+    
+    // Make draggable
+    this.makeDraggable(this.container);
     
     // Update display
     this.updateUI();
@@ -125,8 +149,89 @@ class YouTubeLooper {
     `;
     btn.onmouseenter = () => { btn.style.background = color + '33'; };
     btn.onmouseleave = () => { btn.style.background = 'transparent'; };
-    btn.onclick = onClick;
+    btn.onclick = (e) => {
+      e.stopPropagation(); // Prevent drag
+      onClick();
+    };
     return btn;
+  }
+
+  private makeDraggable(element: HTMLElement): void {
+    // Find the drag handle (first child)
+    const handle = element.firstChild as HTMLElement;
+    if (!handle) return;
+
+    let isDragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    const onMouseDown = (e: MouseEvent) => {
+      // Don't drag if clicking a button
+      if ((e.target as HTMLElement).closest('button')) return;
+      
+      isDragging = true;
+      const rect = element.getBoundingClientRect();
+      offsetX = e.clientX - rect.left;
+      offsetY = e.clientY - rect.top;
+      element.style.cursor = 'grabbing';
+      element.style.opacity = '0.8';
+      e.preventDefault();
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      
+      let x = e.clientX - offsetX;
+      let y = e.clientY - offsetY;
+      
+      // Keep within viewport
+      const maxX = window.innerWidth - element.offsetWidth;
+      const maxY = window.innerHeight - element.offsetHeight;
+      
+      x = Math.max(0, Math.min(x, maxX));
+      y = Math.max(0, Math.min(y, maxY));
+      
+      element.style.left = x + 'px';
+      element.style.top = y + 'px';
+      element.style.right = 'auto';
+      element.style.bottom = 'auto';
+    };
+
+    const onMouseUp = () => {
+      if (isDragging) {
+        isDragging = false;
+        element.style.cursor = 'grab';
+        element.style.opacity = '1';
+        // Save position
+        this.savePosition();
+      }
+    };
+
+    // Attach to handle
+    handle.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }
+
+  private savePosition(): void {
+    if (!this.container) return;
+    const left = this.container.style.left || '20px';
+    const top = this.container.style.top || '80px';
+    chrome.storage.local.set({
+      loopPosition: { left, top }
+    }).catch(() => {});
+  }
+
+  private restorePosition(): void {
+    chrome.storage.local.get(['loopPosition']).then((result) => {
+      if (result.loopPosition && this.container) {
+        const { left, top } = result.loopPosition as { left: string; top: string };
+        this.container.style.left = left;
+        this.container.style.top = top;
+        this.container.style.right = 'auto';
+        this.container.style.bottom = 'auto';
+      }
+    }).catch(() => {});
   }
 
   private setStart(): void {
@@ -157,7 +262,6 @@ class YouTubeLooper {
       if (this.video) {
         this.video.currentTime = this.loopState.startTime;
         this.video.play().catch(() => {});
-        // Add timeupdate listener
         this.video.addEventListener('timeupdate', this.handleTimeUpdate.bind(this));
       }
       this.showToast(`🔄 Loop ON (${this.formatTime(this.loopState.startTime)} → ${this.formatTime(this.loopState.endTime)})`);
@@ -224,7 +328,6 @@ class YouTubeLooper {
   }
 
   private updateProgressHighlight(): void {
-    // Remove old highlights
     document.querySelectorAll('.loopmaster-progress-highlight').forEach(el => el.remove());
     
     if (!this.video || this.loopState.startTime === null || this.loopState.endTime === null) return;
@@ -324,5 +427,5 @@ class YouTubeLooper {
 }
 
 // Initialize
-console.log('🚀 Starting LoopMaster...');
+console.log('🚀 Starting LoopMaster v1.0.1...');
 new YouTubeLooper();
