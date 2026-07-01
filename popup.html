@@ -5,233 +5,412 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LoopMaster</title>
   <style>
+    /* ===== RESET & BASE ===== */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
-    
+
     body {
-      width: 300px;
-      background: linear-gradient(145deg, #1a1a2e, #16213e);
-      color: #e0e0e0;
-      font-family: 'Segoe UI', Roboto, Arial, sans-serif;
-      padding: 20px;
-      border-radius: 12px;
+      width: 340px;
+      background: #ffffff;
+      color: #1a1a2e;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      padding: 24px 20px 20px;
+      border-radius: 0;
+      line-height: 1.5;
     }
-    
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #0f0f1a;
+        color: #e8e8f0;
+      }
+    }
+
+    /* ===== HEADER ===== */
     .header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 16px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      padding-bottom: 12px;
+      margin-bottom: 20px;
     }
-    
-    .header h2 {
-      font-size: 18px;
-      color: #fff;
-      font-weight: 700;
-    }
-    
-    .header h2 span {
-      color: #FF6B6B;
-    }
-    
-    .badge {
-      font-size: 10px;
-      background: rgba(255,107,107,0.2);
-      color: #FF6B6B;
-      padding: 3px 10px;
-      border-radius: 20px;
-      border: 1px solid rgba(255,107,107,0.3);
-      font-weight: 600;
-    }
-    
-    .status {
+
+    .logo {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 12px 14px;
-      background: rgba(255,255,255,0.05);
-      border-radius: 10px;
-      margin-bottom: 14px;
-      border: 1px solid rgba(255,255,255,0.06);
     }
-    
+
+    .logo-icon {
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .logo-text {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-text .highlight {
+      background: linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .badge {
+      font-size: 10px;
+      font-weight: 600;
+      background: rgba(255, 107, 107, 0.12);
+      color: #FF6B6B;
+      padding: 3px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.3px;
+      border: 1px solid rgba(255, 107, 107, 0.15);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .badge {
+        background: rgba(255, 107, 107, 0.18);
+        border-color: rgba(255, 107, 107, 0.2);
+      }
+    }
+
+    /* ===== STATUS CARD ===== */
+    .status-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      background: rgba(0, 0, 0, 0.04);
+      border-radius: 14px;
+      margin-bottom: 18px;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .status-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.06);
+      }
+    }
+
     .status-dot {
-      width: 12px;
-      height: 12px;
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
-      display: inline-block;
       flex-shrink: 0;
+      transition: all 0.3s ease;
     }
-    
+
     .status-dot.hidden {
-      background: #666;
+      background: #888;
     }
-    
+
     .status-dot.visible {
       background: #4ECDC4;
-      box-shadow: 0 0 12px rgba(78,205,196,0.4);
+      box-shadow: 0 0 16px rgba(78, 205, 196, 0.35);
     }
-    
+
     .status-dot.looping {
       background: #FF6B6B;
-      animation: pulse 1s infinite;
-      box-shadow: 0 0 16px rgba(255,107,107,0.5);
+      animation: pulse 1s ease-in-out infinite;
+      box-shadow: 0 0 20px rgba(255, 107, 107, 0.4);
     }
-    
+
     @keyframes pulse {
       0%, 100% { opacity: 1; transform: scale(1); }
       50% { opacity: 0.5; transform: scale(0.85); }
     }
-    
-    #statusText {
+
+    .status-text {
       font-size: 13px;
       font-weight: 500;
+      flex: 1;
+      color: #1a1a2e;
     }
-    
+
+    @media (prefers-color-scheme: dark) {
+      .status-text {
+        color: #c8c8d8;
+      }
+    }
+
+    .status-text .dim {
+      font-weight: 400;
+      color: #888;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .status-text .dim {
+        color: #666;
+      }
+    }
+
+    /* ===== BUTTONS ===== */
     .btn-group {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
+      margin-bottom: 4px;
     }
-    
+
     .btn {
-      padding: 12px 16px;
+      padding: 13px 20px;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.25s ease;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
+      font-family: inherit;
+      letter-spacing: 0.2px;
+      text-decoration: none;
     }
-    
-    .btn:hover {
-      transform: translateY(-2px);
-      filter: brightness(1.1);
-    }
-    
+
     .btn:active {
       transform: scale(0.97);
     }
-    
+
+    /* Show Button */
     .btn-show {
-      background: linear-gradient(135deg, #4ECDC4, #44b8b0);
+      background: linear-gradient(135deg, #4ECDC4 0%, #3db8b0 100%);
       color: #fff;
-      box-shadow: 0 4px 16px rgba(78,205,196,0.3);
+      box-shadow: 0 4px 16px rgba(78, 205, 196, 0.3);
     }
-    
+
     .btn-show:hover {
-      box-shadow: 0 6px 24px rgba(78,205,196,0.4);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 28px rgba(78, 205, 196, 0.4);
     }
-    
-    .btn-hide {
-      background: linear-gradient(135deg, #FF6B6B, #e55a5a);
-      color: #fff;
-      box-shadow: 0 4px 16px rgba(255,107,107,0.3);
+
+    .btn-show:active {
+      transform: scale(0.97);
     }
-    
-    .btn-hide:hover {
-      box-shadow: 0 6px 24px rgba(255,107,107,0.4);
-    }
-    
-    .btn-shortcuts {
-      background: rgba(255,255,255,0.05);
-      color: #aaa;
-      font-size: 12px;
+
+    .btn-show.active {
+      background: #2d8f88;
+      box-shadow: none;
+      opacity: 0.6;
       cursor: default;
-      border: 1px solid rgba(255,255,255,0.06);
-      flex-direction: column;
-      padding: 14px;
     }
-    
-    .btn-shortcuts:hover {
+
+    .btn-show.active:hover {
       transform: none;
-      filter: none;
+      box-shadow: none;
     }
-    
+
+    /* Hide Button */
+    .btn-hide {
+      background: linear-gradient(135deg, #FF6B6B 0%, #e55a5a 100%);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(255, 107, 107, 0.3);
+    }
+
+    .btn-hide:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 28px rgba(255, 107, 107, 0.4);
+    }
+
+    .btn-hide:active {
+      transform: scale(0.97);
+    }
+
+    .btn-hide.active {
+      background: #a84444;
+      box-shadow: none;
+      opacity: 0.6;
+      cursor: default;
+    }
+
+    .btn-hide.active:hover {
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* Icon inside buttons */
+    .btn-icon {
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    /* ===== SHORTCUTS REFERENCE ===== */
+    .shortcuts-section {
+      margin-top: 14px;
+      padding: 14px 16px;
+      background: rgba(0, 0, 0, 0.03);
+      border-radius: 12px;
+      border: 1px solid rgba(0, 0, 0, 0.04);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .shortcuts-section {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: rgba(255, 255, 255, 0.05);
+      }
+    }
+
+    .shortcuts-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .shortcuts-title {
+        color: #666;
+      }
+    }
+
     .shortcut-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 4px 16px;
-      margin-top: 8px;
-      width: 100%;
-      font-size: 11px;
-      color: #888;
+      font-size: 12px;
     }
-    
-    .shortcut-grid span {
+
+    .shortcut-item {
       display: flex;
       justify-content: space-between;
-      padding: 2px 0;
+      align-items: center;
+      padding: 4px 0;
+      color: #666;
     }
-    
-    .shortcut-grid span:hover {
-      color: #ccc;
+
+    @media (prefers-color-scheme: dark) {
+      .shortcut-item {
+        color: #888;
+      }
     }
-    
-    .key {
-      background: rgba(255,255,255,0.06);
-      padding: 0 8px;
-      border-radius: 4px;
-      font-family: 'Courier New', monospace;
-      color: #aaa;
+
+    .shortcut-item .label {
+      font-weight: 400;
+    }
+
+    .shortcut-item .key {
+      font-family: 'SF Mono', 'Courier New', monospace;
       font-size: 10px;
-      border: 1px solid rgba(255,255,255,0.05);
-    }
-    
-    .footer {
-      margin-top: 14px;
-      padding-top: 12px;
-      border-top: 1px solid rgba(255,255,255,0.06);
-      font-size: 11px;
+      font-weight: 600;
+      background: rgba(0, 0, 0, 0.06);
+      padding: 2px 10px;
+      border-radius: 4px;
       color: #555;
-      text-align: center;
-      letter-spacing: 0.5px;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      letter-spacing: 0.3px;
     }
-    
-    .footer span {
+
+    @media (prefers-color-scheme: dark) {
+      .shortcut-item .key {
+        background: rgba(255, 255, 255, 0.08);
+        color: #aaa;
+        border-color: rgba(255, 255, 255, 0.06);
+      }
+    }
+
+    /* ===== FOOTER ===== */
+    .footer {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(0, 0, 0, 0.05);
+      font-size: 11px;
+      color: #aaa;
+      text-align: center;
+      letter-spacing: 0.3px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .footer {
+        border-top-color: rgba(255, 255, 255, 0.05);
+        color: #555;
+      }
+    }
+
+    .footer .heart {
       color: #FF6B6B;
+    }
+
+    .footer .version {
+      background: rgba(0, 0, 0, 0.04);
+      padding: 1px 8px;
+      border-radius: 10px;
+      font-size: 10px;
+      color: #bbb;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .footer .version {
+        background: rgba(255, 255, 255, 0.06);
+        color: #555;
+      }
     }
   </style>
 </head>
 <body>
+
+  <!-- ===== HEADER ===== -->
   <div class="header">
-    <h2>🔄 Loop<span>Master</span></h2>
-    <span class="badge">v1.0.1</span>
+    <div class="logo">
+      <span class="logo-icon">🔄</span>
+      <span class="logo-text">Loop<span class="highlight">Master</span></span>
+    </div>
+    <span class="badge">v1.0.2</span>
   </div>
 
-  <div class="status" id="statusDisplay">
+  <!-- ===== STATUS ===== -->
+  <div class="status-card" id="statusDisplay">
     <span class="status-dot hidden" id="statusDot"></span>
-    <span id="statusText">Checking...</span>
+    <span class="status-text" id="statusText">Checking...</span>
   </div>
 
+  <!-- ===== BUTTONS ===== -->
   <div class="btn-group">
-    <button class="btn btn-show" id="showBtn">👁️ Show LoopMaster</button>
-    <button class="btn btn-hide" id="hideBtn">✕ Hide LoopMaster</button>
-    <button class="btn btn-shortcuts">
-      ⌨️ Keyboard Shortcuts
-      <div class="shortcut-grid">
-        <span>Set A <span class="key">Ctrl+Shift+1</span></span>
-        <span>Set B <span class="key">Ctrl+Shift+2</span></span>
-        <span>Toggle Loop <span class="key">Ctrl+Shift+3</span></span>
-        <span>Clear Loop <span class="key">Ctrl+Shift+4</span></span>
-        <span style="grid-column: span 2; justify-content: center; gap: 8px;">
-          Show/Hide <span class="key">Ctrl+Shift+H</span>
-        </span>
-      </div>
+    <button class="btn btn-show" id="showBtn">
+      <span class="btn-icon">👁️</span>
+      <span id="showLabel">Show Control UI</span>
+    </button>
+    <button class="btn btn-hide" id="hideBtn">
+      <span class="btn-icon">✕</span>
+      Hide Control UI
     </button>
   </div>
 
+  <!-- ===== SHORTCUTS ===== -->
+  <div class="shortcuts-section">
+    <div class="shortcuts-title">⚡ Quick Reference</div>
+    <div class="shortcut-grid">
+      <div class="shortcut-item">
+        <span class="label">Set Start</span>
+        <span class="key">Click A</span>
+      </div>
+      <div class="shortcut-item">
+        <span class="label">Set End</span>
+        <span class="key">Click B</span>
+      </div>
+      <div class="shortcut-item">
+        <span class="label">Toggle Loop</span>
+        <span class="key">Click ▶</span>
+      </div>
+      <div class="shortcut-item">
+        <span class="label">Clear Points</span>
+        <span class="key">Click ✕</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== FOOTER ===== -->
   <div class="footer">
-    Made with <span>❤️</span> • Keyboard friendly
+    Made with <span class="heart">❤️</span> • UI auto-shows on video play
   </div>
 
   <script src="dist/popup.js"></script>

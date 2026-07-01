@@ -1,6 +1,6 @@
-// src/content.ts - COMPLETE FIXED VERSION
+// src/content.ts - SIMPLIFIED WITH ONLY 4 BUTTONS
 
-console.log('🔴 LoopMaster v1.0.1 LOADED!');
+console.log('🔴 LoopMaster v1.0.2 LOADED!');
 
 let loopMasterInstance: any = null;
 
@@ -14,6 +14,7 @@ class YouTubeLooper {
   };
   private boundTimeUpdate: ((this: HTMLVideoElement, ev: Event) => void) | null = null;
   private isMobile: boolean = false;
+  private isUIVisible: boolean = false;
 
   constructor() {
     console.log('🎬 Initializing LoopMaster...');
@@ -41,10 +42,9 @@ class YouTubeLooper {
       this.video = video as HTMLVideoElement;
       console.log('✅ Video found!', this.video);
       
-      // Wait for video to be ready
       this.waitForVideoReady().then(() => {
         this.createUI();
-        this.restoreVisibility();
+        this.setupAutoShow();
       });
     } else {
       console.log('⏳ No video found, retrying in 1 second...');
@@ -59,14 +59,12 @@ class YouTubeLooper {
         return;
       }
 
-      // Check if video already has duration
       if (this.video.duration > 0 && !isNaN(this.video.duration)) {
         console.log('✅ Video ready! Duration:', this.video.duration);
         resolve();
         return;
       }
 
-      // Wait for loadedmetadata event
       const onLoaded = () => {
         if (this.video) {
           console.log('✅ Video metadata loaded! Duration:', this.video.duration);
@@ -77,13 +75,26 @@ class YouTubeLooper {
       
       this.video.addEventListener('loadedmetadata', onLoaded);
       
-      // Timeout fallback
       setTimeout(() => {
         this.video?.removeEventListener('loadedmetadata', onLoaded);
         console.log('⚠️ Video load timeout, proceeding anyway...');
         resolve();
       }, 5000);
     });
+  }
+
+  private setupAutoShow(): void {
+    if (!this.video) return;
+    
+    this.video.addEventListener('play', () => {
+      console.log('▶️ Video playing, showing UI');
+      this.showUI();
+    });
+
+    if (this.video.currentTime > 0 && !this.video.paused) {
+      console.log('▶️ Video already playing, showing UI');
+      setTimeout(() => this.showUI(), 500);
+    }
   }
 
   private createUI(): void {
@@ -101,29 +112,31 @@ class YouTubeLooper {
       bottom: ${bottomPos} !important;
       left: ${leftPos} !important;
       z-index: 999999 !important;
-      background: linear-gradient(145deg, #1a1a2e, #16213e) !important;
-      border-radius: 16px !important;
-      padding: 12px 16px !important;
+      background: rgba(20, 22, 36, 0.92) !important;
+      backdrop-filter: blur(16px) !important;
+      -webkit-backdrop-filter: blur(16px) !important;
+      border-radius: 18px !important;
+      padding: 14px 20px !important;
       color: white !important;
-      font-family: 'Segoe UI', Roboto, Arial, sans-serif !important;
-      font-size: ${this.isMobile ? '12px' : '14px'} !important;
-      display: flex !important;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      font-size: ${this.isMobile ? '13px' : '15px'} !important;
+      display: none !important;
       align-items: center !important;
-      gap: 8px !important;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255,255,255,0.1) !important;
-      border: 1px solid rgba(255,255,255,0.15) !important;
+      gap: 10px !important;
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.08) !important;
+      border: 1px solid rgba(255,255,255,0.10) !important;
       user-select: none !important;
       cursor: grab !important;
-      min-width: ${this.isMobile ? '180px' : '240px'} !important;
+      min-width: ${this.isMobile ? '180px' : '260px'} !important;
       max-width: 95vw !important;
       flex-wrap: wrap !important;
-      backdrop-filter: blur(10px) !important;
+      transition: opacity 0.3s ease, transform 0.3s ease !important;
     `;
 
-    const btnSize = this.isMobile ? '34px' : '38px';
-    const fontSize = this.isMobile ? '14px' : '16px';
-    const padding = this.isMobile ? '4px 10px' : '6px 14px';
-    const gap = this.isMobile ? '4px' : '8px';
+    const btnSize = this.isMobile ? '36px' : '42px';
+    const fontSize = this.isMobile ? '15px' : '17px';
+    const padding = this.isMobile ? '6px 12px' : '8px 18px';
+    const gap = this.isMobile ? '6px' : '10px';
 
     const btnWrapper = document.createElement('div');
     btnWrapper.style.cssText = `
@@ -149,13 +162,8 @@ class YouTubeLooper {
     btnLoop.onclick = () => this.toggleLoop();
     btnWrapper.appendChild(btnLoop);
 
-    // Close Button
-    const closeBtn = this.createButton('✕', '#FF6B6B', 'Hide', btnSize, fontSize, padding);
-    closeBtn.onclick = () => this.hideUI();
-    btnWrapper.appendChild(closeBtn);
-
-    // Clear Button
-    const btnClear = this.createButton('🗑', '#FF6B6B', 'Clear', btnSize, fontSize, padding);
+    // Clear Button (clears A and B points, UI stays)
+    const btnClear = this.createButton('✕', '#FF6B6B', 'Clear Points', btnSize, fontSize, padding);
     btnClear.onclick = () => this.clearLoop();
     btnWrapper.appendChild(btnClear);
 
@@ -165,14 +173,14 @@ class YouTubeLooper {
     const display = document.createElement('div');
     display.id = 'loop-display';
     display.style.cssText = `
-      font-size: ${this.isMobile ? '11px' : '13px'} !important;
-      color: #aaa !important;
-      padding: 6px 12px !important;
+      font-size: ${this.isMobile ? '12px' : '14px'} !important;
+      color: rgba(255,255,255,0.7) !important;
+      padding: 6px 14px !important;
       background: rgba(255,255,255,0.06) !important;
-      border-radius: 8px !important;
-      min-width: ${this.isMobile ? '80px' : '140px'} !important;
+      border-radius: 10px !important;
+      min-width: ${this.isMobile ? '100px' : '160px'} !important;
       text-align: center !important;
-      font-family: 'Courier New', monospace !important;
+      font-family: 'SF Mono', 'Courier New', monospace !important;
       letter-spacing: 0.5px !important;
       border: 1px solid rgba(255,255,255,0.05) !important;
       flex: 1 !important;
@@ -180,15 +188,16 @@ class YouTubeLooper {
     display.textContent = '⏸ A:--:-- B:--:--';
     this.container.appendChild(display);
 
+    // Drag handle
     const dragHandle = document.createElement('div');
     dragHandle.style.cssText = `
       position: absolute !important;
-      top: 4px !important;
+      top: 6px !important;
       left: 50% !important;
       transform: translateX(-50%) !important;
-      width: 30px !important;
-      height: 3px !important;
-      background: rgba(255,255,255,0.15) !important;
+      width: 40px !important;
+      height: 4px !important;
+      background: rgba(255,255,255,0.12) !important;
       border-radius: 4px !important;
       cursor: grab !important;
     `;
@@ -206,34 +215,35 @@ class YouTubeLooper {
     btn.textContent = text;
     btn.title = title;
     btn.style.cssText = `
-      background: rgba(255,255,255,0.05) !important;
+      background: rgba(255,255,255,0.06) !important;
       border: 2px solid ${color} !important;
       color: ${color} !important;
       padding: ${padding} !important;
-      border-radius: 10px !important;
+      border-radius: 12px !important;
       cursor: pointer !important;
       font-size: ${fontSize} !important;
       font-weight: 700 !important;
       min-width: ${size} !important;
       height: ${size} !important;
-      transition: all 0.2s ease !important;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
       line-height: 1 !important;
       flex-shrink: 0 !important;
       text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.2) !important;
+      letter-spacing: 0.3px !important;
     `;
     btn.onmouseenter = () => { 
-      btn.style.background = color + '33'; 
-      btn.style.transform = 'scale(1.05)';
-      btn.style.boxShadow = '0 4px 16px rgba(0,0,0,0.4)';
+      btn.style.background = color + '25'; 
+      btn.style.transform = 'scale(1.06) translateY(-2px)';
+      btn.style.boxShadow = '0 6px 24px rgba(0,0,0,0.4)';
     };
     btn.onmouseleave = () => { 
-      btn.style.background = 'rgba(255,255,255,0.05)'; 
-      btn.style.transform = 'scale(1)';
-      btn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
+      btn.style.background = 'rgba(255,255,255,0.06)'; 
+      btn.style.transform = 'scale(1) translateY(0)';
+      btn.style.boxShadow = '0 2px 12px rgba(0,0,0,0.2)';
     };
     btn.onmousedown = () => {
-      btn.style.transform = 'scale(0.93)';
+      btn.style.transform = 'scale(0.92)';
     };
     btn.onmouseup = () => {
       btn.style.transform = 'scale(1)';
@@ -286,36 +296,48 @@ class YouTubeLooper {
     document.addEventListener('mouseup', onMouseUp);
   }
 
-  private hideUI(): void {
-    if (this.container) {
-      this.container.style.display = 'none';
-      this.showToast('👋 LoopMaster hidden');
-      chrome.storage.local.set({ loopHidden: true }).catch(() => {});
-    }
-  }
+  // ==================== UI CONTROL ====================
 
-  private showUI(): void {
+  public showUI(): void {
     if (this.container) {
       this.container.style.display = 'flex';
-      this.showToast('👋 LoopMaster visible!');
-      chrome.storage.local.set({ loopHidden: false }).catch(() => {});
+      this.isUIVisible = true;
+      this.container.style.opacity = '0';
+      this.container.style.transform = 'translateY(10px)';
+      setTimeout(() => {
+        if (this.container) {
+          this.container.style.opacity = '1';
+          this.container.style.transform = 'translateY(0)';
+        }
+      }, 10);
+      console.log('👀 UI shown');
     }
   }
 
-  private toggleVisibility(): void {
-    if (this.container && this.container.style.display === 'none') {
-      this.showUI();
-    } else {
+  public hideUI(): void {
+    if (this.container) {
+      this.container.style.opacity = '0';
+      this.container.style.transform = 'translateY(10px)';
+      setTimeout(() => {
+        if (this.container) {
+          this.container.style.display = 'none';
+          this.isUIVisible = false;
+        }
+      }, 300);
+      console.log('👀 UI hidden');
+    }
+  }
+
+  public toggleUI(): void {
+    if (this.isUIVisible) {
       this.hideUI();
+    } else {
+      this.showUI();
     }
   }
 
-  private restoreVisibility(): void {
-    chrome.storage.local.get(['loopHidden']).then((result) => {
-      if (result.loopHidden && this.container) {
-        this.container.style.display = 'none';
-      }
-    }).catch(() => {});
+  public isVisible(): boolean {
+    return this.isUIVisible;
   }
 
   private setupMessageListener(): void {
@@ -331,10 +353,14 @@ class YouTubeLooper {
           this.hideUI();
           sendResponse({ success: true, isVisible: false });
           break;
+        case 'toggleUI':
+          this.toggleUI();
+          sendResponse({ success: true, isVisible: this.isUIVisible });
+          break;
         case 'getState':
           sendResponse({ 
             state: this.loopState,
-            isVisible: this.container ? this.container.style.display !== 'none' : true
+            isVisible: this.isUIVisible
           });
           break;
         default:
@@ -344,7 +370,7 @@ class YouTubeLooper {
     });
   }
 
-  // ==================== CORE FUNCTIONS (FIXED) ====================
+  // ==================== CORE FUNCTIONS ====================
 
   private setStart(): void {
     if (!this.video) {
@@ -352,7 +378,6 @@ class YouTubeLooper {
       return;
     }
     
-    // Make sure video is playing or has currentTime
     const currentTime = this.video.currentTime;
     if (isNaN(currentTime) || currentTime < 0) {
       this.showToast('⚠️ Video not loaded yet!');
@@ -363,7 +388,6 @@ class YouTubeLooper {
     this.updateUI();
     this.showToast(`🔴 Start: ${this.formatTime(this.loopState.startTime)}`);
     console.log('Start set:', this.loopState.startTime);
-    console.log('Video current time:', this.video.currentTime);
   }
 
   private setEnd(): void {
@@ -382,29 +406,22 @@ class YouTubeLooper {
     this.updateUI();
     this.showToast(`🔵 End: ${this.formatTime(this.loopState.endTime)}`);
     console.log('End set:', this.loopState.endTime);
-    console.log('Video current time:', this.video.currentTime);
   }
 
   private toggleLoop(): void {
     console.log('🔄 Toggle Loop called! Current state:', this.loopState.isActive);
-    console.log('Start time:', this.loopState.startTime);
-    console.log('End time:', this.loopState.endTime);
     
     if (this.loopState.startTime === null || this.loopState.endTime === null) {
       this.showToast('⚠️ Set A and B first!');
-      console.log('⚠️ Cannot toggle: A or B not set');
       return;
     }
 
-    // Make sure times are valid
     if (this.loopState.startTime >= this.loopState.endTime) {
       this.showToast('⚠️ Start must be before End!');
-      console.log('⚠️ Start >= End');
       return;
     }
 
     this.loopState.isActive = !this.loopState.isActive;
-    console.log('🔄 New loop state:', this.loopState.isActive);
 
     if (this.loopState.isActive) {
       if (this.video) {
@@ -412,16 +429,12 @@ class YouTubeLooper {
         this.boundTimeUpdate = this.handleTimeUpdate.bind(this);
         this.video.addEventListener('timeupdate', this.boundTimeUpdate);
         this.video.currentTime = this.loopState.startTime;
-        this.video.play().catch((err) => {
-          console.log('⚠️ Play error:', err);
-        });
-        console.log('✅ Loop started, jumped to:', this.loopState.startTime);
+        this.video.play().catch(() => {});
       }
       this.showToast(`🔄 Loop ON (${this.formatTime(this.loopState.startTime)} → ${this.formatTime(this.loopState.endTime)})`);
     } else {
       this.removeTimeUpdateListener();
       this.showToast('⏹ Loop OFF');
-      console.log('✅ Loop stopped');
     }
 
     this.updateUI();
@@ -431,7 +444,6 @@ class YouTubeLooper {
     if (this.video && this.boundTimeUpdate) {
       this.video.removeEventListener('timeupdate', this.boundTimeUpdate);
       this.boundTimeUpdate = null;
-      console.log('🔇 Timeupdate listener removed');
     }
   }
 
@@ -441,7 +453,6 @@ class YouTubeLooper {
     
     const currentTime = this.video.currentTime;
     if (currentTime >= this.loopState.endTime) {
-      console.log(`🔄 Loop jump: ${currentTime.toFixed(2)} → ${this.loopState.startTime.toFixed(2)}`);
       this.video.currentTime = this.loopState.startTime;
       this.video.play().catch(() => {});
     }
@@ -451,7 +462,7 @@ class YouTubeLooper {
     this.removeTimeUpdateListener();
     this.loopState = { isActive: false, startTime: null, endTime: null };
     this.updateUI();
-    this.showToast('🗑 Cleared');
+    this.showToast('🗑 Points cleared');
     console.log('🗑 Loop cleared');
   }
 
@@ -473,13 +484,13 @@ class YouTubeLooper {
         toggleBtn.title = 'Stop Loop';
         toggleBtn.style.borderColor = '#FF6B6B';
         toggleBtn.style.color = '#FF6B6B';
-        toggleBtn.style.background = 'rgba(255,107,107,0.2)';
+        toggleBtn.style.background = 'rgba(255,107,107,0.15)';
       } else {
         toggleBtn.textContent = '▶';
         toggleBtn.title = 'Start Loop';
         toggleBtn.style.borderColor = '#FFD93D';
         toggleBtn.style.color = '#FFD93D';
-        toggleBtn.style.background = 'rgba(255,217,61,0.1)';
+        toggleBtn.style.background = 'rgba(255,217,61,0.08)';
       }
     }
 
@@ -509,11 +520,11 @@ class YouTubeLooper {
       left: ${Math.max(0, startPercent)}% !important;
       width: ${Math.min(100, widthPercent)}% !important;
       height: 100% !important;
-      background: ${this.loopState.isActive ? 'rgba(255,107,107,0.5)' : 'rgba(255,217,61,0.35)'} !important;
+      background: ${this.loopState.isActive ? 'rgba(255,107,107,0.45)' : 'rgba(255,217,61,0.30)'} !important;
       pointer-events: none !important;
       z-index: 10 !important;
       border-radius: 2px !important;
-      box-shadow: ${this.loopState.isActive ? '0 0 20px rgba(255,107,107,0.3)' : 'none'} !important;
+      box-shadow: ${this.loopState.isActive ? '0 0 24px rgba(255,107,107,0.25)' : 'none'} !important;
       transition: background 0.3s ease !important;
     `;
     progressBar.style.position = 'relative';
@@ -537,24 +548,27 @@ class YouTubeLooper {
     toast.className = 'loopmaster-toast';
     toast.style.cssText = `
       position: fixed !important;
-      bottom: ${this.isMobile ? '130px' : '160px'} !important;
+      bottom: ${this.isMobile ? '140px' : '170px'} !important;
       left: 50% !important;
       transform: translateX(-50%) !important;
-      background: rgba(0,0,0,0.92) !important;
+      background: rgba(0,0,0,0.88) !important;
+      backdrop-filter: blur(12px) !important;
+      -webkit-backdrop-filter: blur(12px) !important;
       color: white !important;
-      padding: ${this.isMobile ? '8px 16px' : '12px 24px'} !important;
-      border-radius: 12px !important;
-      font-family: 'Segoe UI', Roboto, Arial, sans-serif !important;
-      font-size: ${this.isMobile ? '13px' : '15px'} !important;
+      padding: ${this.isMobile ? '10px 20px' : '14px 28px'} !important;
+      border-radius: 14px !important;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      font-size: ${this.isMobile ? '14px' : '16px'} !important;
+      font-weight: 500 !important;
       z-index: 999999 !important;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
-      border: 1px solid rgba(255,255,255,0.1) !important;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5) !important;
+      border: 1px solid rgba(255,255,255,0.08) !important;
       pointer-events: none !important;
       white-space: nowrap !important;
       max-width: 90vw !important;
       overflow: hidden !important;
       text-overflow: ellipsis !important;
-      backdrop-filter: blur(10px) !important;
+      letter-spacing: 0.3px !important;
     `;
     toast.textContent = message;
     document.body.appendChild(toast);
@@ -568,6 +582,6 @@ class YouTubeLooper {
 }
 
 // Initialize
-console.log('🚀 Starting LoopMaster...');
+console.log('🚀 Starting LoopMaster v1.0.2...');
 loopMasterInstance = new YouTubeLooper();
 (window as any).loopMaster = loopMasterInstance;

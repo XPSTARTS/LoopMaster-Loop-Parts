@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LoopMaster - YouTube A-B Looper",
-  "version": "1.0.2",
+  "version": "2.0.2",
   "description": "Loop specific parts of YouTube videos with one click",
   "browser_specific_settings": {
     "gecko": {
@@ -17,6 +17,7 @@
     "https://m.youtube.com/*"
   ],
   "action": {
+    "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
       "128": "icons/icon128.png"

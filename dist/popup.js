@@ -1,76 +1,83 @@
 "use strict";
-// src/popup.ts
+// src/popup.ts - NO innerHTML (safe)
 document.addEventListener('DOMContentLoaded', () => {
     const statusDot = document.getElementById('statusDot');
     const statusText = document.getElementById('statusText');
     const showBtn = document.getElementById('showBtn');
+    const showLabel = document.getElementById('showLabel');
     const hideBtn = document.getElementById('hideBtn');
-    // Check current state
     updateStatus();
-    // Show button
     showBtn.addEventListener('click', () => {
-        sendMessageToTab({ type: 'showUI' });
-        updateStatus();
+        sendMessage({ type: 'showUI' });
+        setTimeout(updateStatus, 300);
     });
-    // Hide button
     hideBtn.addEventListener('click', () => {
-        sendMessageToTab({ type: 'hideUI' });
-        updateStatus();
+        sendMessage({ type: 'hideUI' });
+        setTimeout(updateStatus, 300);
     });
     async function updateStatus() {
         try {
             const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
             const tab = tabs[0];
-            if (!tab.id) {
-                setStatus('inactive', 'No active tab');
+            if (!tab.id || !tab.url?.includes('youtube.com')) {
+                setStatus('hidden', 'Open a YouTube video');
+                setButtonStates(false);
                 return;
             }
-            // Check if we're on YouTube
-            if (!tab.url?.includes('youtube.com')) {
-                setStatus('inactive', 'Not on YouTube');
-                return;
-            }
-            // Send message to content script
             const response = await chrome.tabs.sendMessage(tab.id, { type: 'getState' });
             if (response && response.state) {
                 const state = response.state;
-                const isVisible = response.isVisible !== undefined ? response.isVisible : true;
+                const isVisible = response.isVisible || false;
                 if (state.isActive) {
-                    setStatus('looping', `🔴 Looping ${formatTime(state.startTime)} → ${formatTime(state.endTime)}`);
+                    const start = formatTime(state.startTime);
+                    const end = formatTime(state.endTime);
+                    setStatus('looping', `🔴 Looping ${start} → ${end}`);
                 }
                 else if (state.startTime !== null && state.endTime !== null) {
-                    setStatus('visible', `⏸ Ready: ${formatTime(state.startTime)} → ${formatTime(state.endTime)}`);
+                    const start = formatTime(state.startTime);
+                    const end = formatTime(state.endTime);
+                    setStatus('visible', `⏸ Ready: ${start} → ${end}`);
                 }
                 else {
-                    setStatus('visible', '⏸ No loop set');
+                    setStatus('visible', '⏸ Set A and B points');
                 }
+                setButtonStates(isVisible);
             }
             else {
-                setStatus('inactive', 'Extension not ready');
+                setStatus('hidden', 'Click a YouTube video');
+                setButtonStates(false);
             }
         }
         catch (error) {
-            console.log('Error updating status:', error);
-            setStatus('inactive', 'Click a YouTube video');
+            console.log('Error:', error);
+            setStatus('hidden', 'Click a YouTube video');
+            setButtonStates(false);
         }
     }
     function setStatus(type, text) {
         statusDot.className = 'status-dot';
         if (type === 'visible') {
             statusDot.classList.add('visible');
-            statusText.textContent = text;
         }
         else if (type === 'looping') {
             statusDot.classList.add('looping');
-            statusText.textContent = text;
-        }
-        else if (type === 'hidden') {
-            statusDot.classList.add('hidden');
-            statusText.textContent = text;
         }
         else {
             statusDot.classList.add('hidden');
-            statusText.textContent = text;
+        }
+        // Using textContent instead of innerHTML (safe!)
+        statusText.textContent = text;
+    }
+    function setButtonStates(isVisible) {
+        if (isVisible) {
+            showBtn.classList.add('active');
+            showLabel.textContent = 'UI is Visible';
+            hideBtn.classList.remove('active');
+        }
+        else {
+            showBtn.classList.remove('active');
+            showLabel.textContent = 'Show Control UI';
+            hideBtn.classList.add('active');
         }
     }
     function formatTime(seconds) {
@@ -80,14 +87,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const secs = Math.floor(seconds % 60);
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     }
-    async function sendMessageToTab(message) {
+    async function sendMessage(message) {
         try {
             const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
             const tab = tabs[0];
             if (tab.id) {
                 await chrome.tabs.sendMessage(tab.id, message);
-                // Update status after a short delay
-                setTimeout(updateStatus, 200);
             }
         }
         catch (error) {
